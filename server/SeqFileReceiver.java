@@ -16,22 +16,26 @@ public class SeqFileReceiver implements FileReceiver {
     private final DatagramSocket outSocket;
     private final DatagramSocket inSocket;
     private final int port = 3244;
+    private final int bufferSize;
     private InetAddress address;
     private ServerBuffer buffer;
     private Random rand = new Random();
     private boolean sentinel = true;
 
-    public SeqFileReceiver(boolean fakeDrop) throws SocketException, UnknownHostException {
+    public SeqFileReceiver(boolean fakeDrop, int bufferSize) throws SocketException, UnknownHostException {
         this.fakeDrop = fakeDrop;
+        this.bufferSize = bufferSize;
 //        address = InetAddress.getByName("wolf.cs.oswego.edu");
         address = Inet6Address.getByName("fe80::62eb:69ff:fe82:388a");
         inSocket = new DatagramSocket(port);
         outSocket = new DatagramSocket();
+        System.out.println("server");
     }
 
     @Override
     public void beginServer() {
         while (sentinel) {
+            System.out.println("start loop");
             sentinel = false;
             try {
                 byte[] inArray = new byte[20];
@@ -69,7 +73,7 @@ public class SeqFileReceiver implements FileReceiver {
             byte[] data = initialPacket.getData();
             String fileName = new String(ArrayUtils.subarray(data, 0, 16), "UTF-8");
             int fileSize = bytesToLong(ArrayUtils.subarray(data, 16, 20));
-            return new ServerBuffer(fileName, fileSize, 500);
+            return new ServerBuffer(fileName, fileSize, bufferSize);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

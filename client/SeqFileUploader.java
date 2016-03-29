@@ -16,12 +16,14 @@ public class SeqFileUploader implements FileUploader {
     private final DatagramSocket inSocket;
     private final InetAddress address;
     private final int port = 3244;
+    private final int bufferSize;
 
 
-    public SeqFileUploader(boolean fakeDrop) throws UnknownHostException, SocketException {
+    public SeqFileUploader(boolean fakeDrop, int bufferSize) throws UnknownHostException, SocketException {
         this.fakeDrop = fakeDrop;
+        this.bufferSize = bufferSize;
 //        address = InetAddress.getByName("wolf.cs.oswego.edu");
-        address = Inet6Address.getByName("fe80::225:90ff:fe4d:f030");
+        address = Inet6Address.getByName("fe80::62eb:69ff:fe82:388a");
         inSocket = new DatagramSocket(port);
         outSocket = new DatagramSocket();
 
@@ -29,7 +31,7 @@ public class SeqFileUploader implements FileUploader {
 
     @Override
     public void uploadFile(byte[] fileToUpload, String fileName, int fileSize) {
-        ClientBuffer buffer = new ClientBuffer(fileToUpload, 500);
+        ClientBuffer buffer = new ClientBuffer(fileToUpload, bufferSize);
         Thread thread = new Thread(new AckReciever(buffer));
         thread.start();
         // Initial Send
@@ -51,7 +53,6 @@ public class SeqFileUploader implements FileUploader {
             try {
                 DatagramPacket next = buffer.next(address, port);
                 if (next != null) {
-                    SlidingPacket test = new SlidingPacket(next.getData());
                     outSocket.send(next);
                 }
             } catch (IOException e) {

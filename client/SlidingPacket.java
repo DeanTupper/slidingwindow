@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
  * Created by dean on 3/23/16.
  */
 public class SlidingPacket {
-    private static final long TIMEOUT_TIME = 1000000l;
+    private static final long TIMEOUT_TIME = 5000000000l;
 
     private final Integer position;
 

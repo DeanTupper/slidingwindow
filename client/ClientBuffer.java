@@ -4,7 +4,9 @@ import org.apache.commons.lang.ArrayUtils;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.util.Collections;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -12,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ClientBuffer {
     private static final int DATAGRAM_SIZE = 64000 - (4 + 4);
-    private final ConcurrentHashMap<Integer, SlidingPacket> buffer = new ConcurrentHashMap<>();
+    private final Map<Integer, SlidingPacket> buffer = Collections.synchronizedSortedMap(new TreeMap());
     private final int bufferSize;
     private final byte[] fileToUpload;
     private int seq = 0;
@@ -25,12 +27,6 @@ public class ClientBuffer {
     }
 
     public DatagramPacket next(InetAddress address, int port) {
-        for (Map.Entry<Integer, SlidingPacket> current : buffer.entrySet()) {
-            SlidingPacket currentPacket = current.getValue();
-            if (currentPacket.timedOut()) {
-                return currentPacket.getPacket(address, port);
-            }
-        }
         if (buffer.size() < bufferSize) {
             if (offset < fileToUpload.length) {
                 if (buffer.keySet().size() < bufferSize) {
@@ -40,6 +36,13 @@ public class ClientBuffer {
                 if (buffer.size() == 0) {
                     finished = true;
                 }
+            }
+        }
+        for (Map.Entry<Integer, SlidingPacket> current : buffer.entrySet()) {
+            SlidingPacket currentPacket = current.getValue();
+            if (currentPacket.timedOut()) {
+                System.out.println("timeout: " + currentPacket.getSeq());
+                return currentPacket.getPacket(address, port);
             }
         }
         return null;

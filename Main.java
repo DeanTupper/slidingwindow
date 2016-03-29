@@ -15,6 +15,7 @@ public class Main {
 
     private static final int fileSize = 1024 * 1024 * 100;
     private static boolean fakeDrop = false;
+    private static int bufferSize = 500;
 
     public static void main(String[] args) {
         if (args[0].equals("4")) {
@@ -31,10 +32,11 @@ public class Main {
     }
 
     private static void initServer(String type) {
+        System.out.println("init server");
         try {
             FileReceiver server = null;
             if (type.equals("seq")) {
-                server = new SeqFileReceiver(fakeDrop);
+                server = new SeqFileReceiver(fakeDrop, bufferSize);
             } else {
 
             }
@@ -53,7 +55,7 @@ public class Main {
             String fileName = createFileName();
             byte[] file = createFile(fileName);
             if (type.equals("seq")) {
-                client = new SeqFileUploader(fakeDrop);
+                client = new SeqFileUploader(fakeDrop, bufferSize);
             } else {
 
             }

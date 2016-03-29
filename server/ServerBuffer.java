@@ -50,25 +50,27 @@ public class ServerBuffer {
     public boolean received(DatagramPacket packet) {
         boolean received = false;
         SlidingPacket slidingPacket = new SlidingPacket(packet.getData());
-        if (buffer.size() < bufferSize) {
+        System.out.println("received: " + slidingPacket.getSeq());
+        System.out.println("next: " + nextExpectedSeq);
+        if (slidingPacket.getSeq() < nextExpectedSeq) {
+            received = true;
+        } else if (buffer.size() < bufferSize) {
             if (slidingPacket.getPosition() + DATAGRAM_SIZE > fileSize) {
                 int actualSize = fileSize - slidingPacket.getPosition();
                 slidingPacket = new SlidingPacket(ArrayUtils.subarray(packet.getData(), 0, 8 + actualSize));
-            } else {
             }
             if (buffer.get(slidingPacket.getSeq()) == null) {
 //                System.out.println("put " + slidingPacket.getSeq() + " into buffer");
                 buffer.put(slidingPacket.getSeq(), slidingPacket);
-            } else {
-//                System.out.println("already in the buffer");
             }
-
             received = true;
         } else {
             if (slidingPacket.getSeq() == nextExpectedSeq) {
                 writeToFileArray(slidingPacket.getInnerData());
                 nextExpectedSeq++;
                 received = true;
+            } else {
+                //received = false and an ack will not be sent
             }
         }
         buildFile();
